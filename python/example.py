@@ -36,8 +36,35 @@ def random_scale():
     return s.item()
 
 
+def test_transform(dst, src, R, t, s):
+    # Recover R and t
+    ret_R, ret_t, ret_s = rigid_transform(src, dst, calc_scale=True)
+    dst2 = ret_s * src @ R.T + ret_t.T
+    # Calculate error
+    rmse = np.sqrt(np.mean(((dst - dst2) ** 2).flatten()))
+
+    print("Ground truth rotation")
+    print(R)
+    print("")
+    print("Recovered rotation")
+    print(ret_R)
+    print("")
+
+    print("Ground truth translation: ", t.flatten())
+    print("Recovered translation: ", ret_t.flatten())
+    print("")
+    print("Ground truth scale: ", s)
+    print("Recovered scale: ", ret_s)
+    print("")
+    print("RMSE:", rmse)
+
+    if rmse < 1e-6:
+        print("Everything looks good!")
+    else:
+        print("Hmm something doesn't look right ...")
+
 if __name__ == "__main__":
-    for dim in [2, 3]:
+    for dim in [3]:
         print("=" * 60)
         print(f"{dim}D points")
         print("")
@@ -48,28 +75,8 @@ if __name__ == "__main__":
         src = random_points(100, dim)
         dst = s * src @ R.T + t.T
 
-        # Recover R and t
-        ret_R, ret_t, ret_s = rigid_transform(src, dst, calc_scale=True)
-        dst2 = ret_s * src @ R.T + ret_t.T
+        test_transform(dst, src, R, t, s)
 
-        rmse = np.sqrt(np.mean(((dst - dst2) ** 2).flatten()))
-
-        print("Ground truth rotation")
-        print(R)
-        print("")
-        print("Recovered rotation")
-        print(ret_R)
-        print("")
-
-        print("Ground truth translation: ", t.flatten())
-        print("Recovered translation: ", ret_t.flatten())
-        print("")
-        print("Ground truth scale: ", s)
-        print("Recovered scale: ", ret_s)
-        print("")
-        print("RMSE:", rmse)
-
-        if rmse < 1e-6:
-            print("Everything looks good!")
-        else:
-            print("Hmm something doesn't look right ...")
+        # Shuffles dst points
+        np.random.shuffle(dst)
+        test_transform(dst, src, R, t, s)
